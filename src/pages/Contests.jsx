@@ -53,36 +53,23 @@ const Contests = () => {
   const handleEnterContest = async (contest) => {
     if (!contest.problems_id || contest.problems_id.length === 0) return;
 
-    if (expandedContest === contest.contest_id) {
-      setExpandedContest(null);
-      return;
-    }
-
-    
-    setExpandedContest(contest.contest_id);
-    setProblemsLoading(true);
-    const fetchedProblems = {};
-
-    await Promise.all(
-      contest.problems_id.map(async (pid) => {
-        try {
-          const res = await axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/problems/${pid}`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          fetchedProblems[pid] = res.data;
-        } catch (e) {
-          fetchedProblems[pid] = { error: "Failed to load problem" };
+    try {
+      // Call contest registration API
+      const userId = localStorage.getItem("userId");
+      const response = await axios.post(
+        `${import.meta.env.VITE_CONTEST_REGISTRATION}`,
+        {
+          user_id: parseInt(userId),
+          contest_title: contest.contest_id
         }
-      })
-    );
+      );
 
-    setProblems(fetchedProblems);
-    setProblemsLoading(false);
+      // If registration is successful, navigate to contest problems page
+      navigate(`/contests/${contest.contest_id}`);
+    } catch (error) {
+      console.error("Failed to register for contest:", error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const ongoingContests = contests.filter(
