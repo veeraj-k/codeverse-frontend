@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt, FaCode as FaLanguage } from 'react-icons/fa';
+import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt, FaCode as FaLanguage, FaChartLine } from 'react-icons/fa';
 
 const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
   const { id: paramSubmissionId } = useParams();
@@ -12,6 +12,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [ws, setWs] = useState(null);
+  const [complexity, setComplexity] = useState(null);
 
   // Use either prop or URL param for submission ID
   const submissionId = propSubmissionId || paramSubmissionId;
@@ -45,6 +46,19 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         }
 
         setSubmission(response.data);
+
+        // Fetch complexity analysis
+        try {
+          const complexityResponse = await axios.post(
+             `${import.meta.env.VITE_COMPLEXITY}/`,
+            {
+              code: response.data.code
+            }
+          );
+          setComplexity(complexityResponse.data.message);
+        } catch (complexityError) {
+          console.error('Error fetching complexity:', complexityError);
+        }
 
         // If submission is still processing, connect to WebSocket
         if (response.data.status === 'PROCESSING') {
@@ -267,7 +281,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8"
         >
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
@@ -303,12 +317,34 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="flex items-center gap-4">
-                <FaLanguage className="text-primary" />
+                <FaClock className="text-primary" />
                 <div>
-                  <h3 className="card-title text-lg">Language</h3>
-                  <p className="text-xl font-semibold">
-                    {submission.language.charAt(0).toUpperCase() + submission.language.slice(1)}
-                  </p>
+                  <h3 className="card-title text-lg">Time Complexity</h3>
+                  {complexity ? (
+                    <p className="text-xl font-semibold text-success">
+                      {complexity['time complexity']}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-base-content/70">Analyzing...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-4">
+                <FaMemory className="text-primary" />
+                <div>
+                  <h3 className="card-title text-lg">Space Complexity</h3>
+                  {complexity ? (
+                    <p className="text-xl font-semibold text-success">
+                      {complexity['space complexity']}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-base-content/70">Analyzing...</p>
+                  )}
                 </div>
               </div>
             </div>
