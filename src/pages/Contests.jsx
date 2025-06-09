@@ -14,7 +14,7 @@ const Contests = () => {
 
   const fetchContests = () => {
     axios
-      .get(`${import.meta.env.VITE_START_CONTEST_URL}`)
+      .get(`${import.meta.env.VITE_DJ_URL}/message_api/contest_start/`)
       .then((response) => {
         setContests(response.data.contests || []);
         setLoading(false);
@@ -85,7 +85,7 @@ const Contests = () => {
       console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Debug log with formatting
 
       const response = await axios.post(
-        import.meta.env.VITE_CONTEST_REGISTRATION,
+        `${import.meta.env.VITE_DJ_URL}/message_api/contest_registration/`,
         payload,
         {
           headers: {

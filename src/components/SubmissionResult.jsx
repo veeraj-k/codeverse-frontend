@@ -26,7 +26,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
       }
 
       try {
-        console.log('Fetching submission with ID:', submissionId);
+       
         const response = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`,
           {
@@ -37,7 +37,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
           }
         );
 
-        console.log('API Response:', response.data);
+      
 
         if (!response.data) {
           setError('No submission data received');
@@ -50,7 +50,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         // Fetch complexity analysis
         try {
           const complexityResponse = await axios.post(
-             `${import.meta.env.VITE_COMPLEXITY}/`,
+             `${import.meta.env.VITE_DJ_URL}/message_api/comp/`,
             {
               code: response.data.code
             }
@@ -63,7 +63,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         // If submission is still processing, connect to WebSocket
         if (response.data.status === 'PROCESSING') {
           const wsUrl = `${import.meta.env.VITE_SUBMISSION_URL}/api/submission/status/${submissionId}`;
-          console.log('Connecting to WebSocket:', wsUrl);
+         
           const newWs = new WebSocket(wsUrl);
 
           newWs.onopen = () => {

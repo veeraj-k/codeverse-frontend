@@ -34,7 +34,7 @@ const Leaderboard = ({ contestTitle }) => {
 
     // Setup WebSocket connection
     const formattedContestTitle = contestTitle.replace(/ /g, '_');
-    const wsUrl = `${import.meta.env.VITE_LEADERBOARD_WEB_SOCKET}/${formattedContestTitle}/`;
+    const wsUrl = `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/leaderboard/${formattedContestTitle}/`;
     const newWs = new WebSocket(wsUrl);
 
     newWs.onopen = () => {

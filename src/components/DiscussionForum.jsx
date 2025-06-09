@@ -19,8 +19,8 @@ const DiscussionForum = ({ problemName }) => {
       setIsLoading(true);
       try {
         const endpoint = isCentralForum 
-          ? `${import.meta.env.VITE_FETCH_MESSAGE}/central`
-          : `${import.meta.env.VITE_FETCH_MESSAGE}/${problemName.toLowerCase().replace(/\s+/g, "_")}`;
+          ? `${import.meta.env.VITE_DJ_URL}/message_api/message/central`
+          : `${import.meta.env.VITE_DJ_URL}/mesage_api/message/${problemName.toLowerCase().replace(/\s+/g, "_")}`;
         
         const res = await axios.get(endpoint);
         const formattedMessages = res.data.map((msg) => ({
@@ -42,8 +42,8 @@ const DiscussionForum = ({ problemName }) => {
 
   useEffect(() => {
     const endpoint = isCentralForum 
-      ? `${import.meta.env.VITE_WEB_SOCKET_URL}/central/`
-      : `${import.meta.env.VITE_WEB_SOCKET_URL}/${problemName.toLowerCase().replace(/\s+/g, "_")}/`;
+      ? `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/chat/central/`
+      : `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/chat/${problemName.toLowerCase().replace(/\s+/g, "_")}/`;
     
     const socket = new WebSocket(endpoint);
     socketRef.current = socket;

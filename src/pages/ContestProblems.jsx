@@ -35,7 +35,7 @@ const ContestProblems = () => {
       try {
         // First fetch initial leaderboard data
         const response = await axios.get(
-          `${import.meta.env.VITE_LEADERBOARD_URL}/?contest_title=${encodeURIComponent(contestName)}`,
+          `${import.meta.env.VITE_DJ_URL}/message_api/leaderboard/?contest_title=${encodeURIComponent(contestName)}`,
           {
             headers: {
               'Content-Type': 'application/json'
@@ -44,13 +44,13 @@ const ContestProblems = () => {
         );
         
         if (response.data && response.data.message && Array.isArray(response.data.message)) {
-          console.log('Initial leaderboard data received:', response.data.message);
+          
           setLeaderboardData(response.data.message);
           
           // After getting initial data, connect to WebSocket
           const formattedContestName = contestName.replace(/\s+/g, '_');
-          const wsUrl = `${import.meta.env.VITE_LEADERBOARD_WEB_SOCKET}/${formattedContestName}/`;
-          console.log('Connecting to WebSocket:', wsUrl);
+          const wsUrl = `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/leaderboard/${formattedContestName}/`;
+          
 
           // Close existing connection if any
           if (ws && ws.readyState === WebSocket.OPEN) {
@@ -71,8 +71,7 @@ const ContestProblems = () => {
              
               
               if (data.message && Array.isArray(data.message)) {
-                console.log('Updating leaderboard with WebSocket data:', data.message);
-                setLeaderboardData(data.message);
+               
               }
             } catch (error) {
               console.error('Error parsing WebSocket message:', error);
@@ -121,7 +120,6 @@ const ContestProblems = () => {
         }
 
         const contestData = JSON.parse(storedContest);
-        console.log('Loaded contest data:', contestData);
         
         // Handle both prizes and prize fields
         let prizeArray = [];
@@ -148,7 +146,7 @@ const ContestProblems = () => {
           prize: prizeArray
         };
         
-        console.log('Formatted contest data:', formattedContestData);
+        
         setContest(formattedContestData);
 
         // Fetch problem details
@@ -168,8 +166,7 @@ const ContestProblems = () => {
         const problemPromises = formattedContestData.problems.map(async (problemId) => {
           try {
             const url = `${baseUrl}/api/problems/${problemId}`;
-            console.log(`Fetching problem ${problemId} from ${url}`);
-            
+           
             const response = await axios.get(url, {
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -180,8 +177,7 @@ const ContestProblems = () => {
             if (!response.data) {
               throw new Error('No data received from API');
             }
-
-            console.log(`Problem ${problemId} response:`, response.data);
+ 
             return {
               ...response.data,
               id: problemId
@@ -206,11 +202,9 @@ const ContestProblems = () => {
         });
 
         const problemResults = await Promise.all(problemPromises);
-        console.log('All problem results:', problemResults);
-        
+ 
         const validProblems = problemResults.filter(problem => problem !== null);
-        console.log('Valid problems:', validProblems);
-
+  
         if (validProblems.length === 0) {
           throw new Error('No valid problems found for this contest');
         }
