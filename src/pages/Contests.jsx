@@ -52,24 +52,88 @@ const Contests = () => {
   }, [contests, expandedContest, navigate]);
 
   const handleEnterContest = async (contest) => {
-    if (!contest.problems_id || contest.problems_id.length === 0) return;
+    if (!contest.problems_id || contest.problems_id.length === 0) {
+      setError('Contest problems are not available yet');
+      return;
+    }
 
     try {
-      // Call contest registration API
-      const userId = localStorage.getItem("userId");
+      setProblemsLoading(true);
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Please log in to enter the contest');
+        return;
+      }
+
+      if (!userId) {
+        console.error('No user ID found');
+        setError('Please log in to enter the contest');
+        return;
+      }
+
+      // First register for the contest using environment variable
+      const payload = {
+        user_id: parseInt(userId),
+        contest_title: contest.template_id
+      };
+
+      console.log('Contest object:', contest); // Debug log
+      console.log('Template ID:', contest.template_id); // Debug log
+      console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Debug log with formatting
+
       const response = await axios.post(
-        `${import.meta.env.VITE_CONTEST_REGISTRATION}`,
+        import.meta.env.VITE_CONTEST_REGISTRATION,
+        payload,
         {
-          user_id: parseInt(userId),
-          contest_title: contest.contest_id
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      // If registration is successful, navigate to contest problems page
+      console.log('Contest registration response:', response.data);
+
+      // Store contest data in localStorage for the contest problems page
+      localStorage.setItem('currentContest', JSON.stringify({
+        contest_id: contest.contest_id,
+        contestName: contest.template_id,
+        startTime: contest.start_datetime,
+        endTime: contest.end_datetime,
+        problems: contest.problems_id,
+        prize: contest.prize || contest.prizes ? (Array.isArray(contest.prize) ? contest.prize : JSON.parse(contest.prizes)) : []
+      }));
+
+      // Navigate to contest problems page
       navigate(`/contests/${contest.contest_id}`);
     } catch (error) {
-      console.error("Failed to register for contest:", error);
-      // You might want to show an error message to the user here
+      console.error('Failed to enter contest:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        data: error.response?.data,
+        payload: JSON.stringify(payload, null, 2) // Log the payload that was sent with formatting
+      });
+
+      let errorMessage = 'Failed to enter contest';
+      if (error.response?.status === 401) {
+        errorMessage = 'Session expired. Please log in again.';
+        // Don't clear tokens or redirect
+        setError(errorMessage);
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        setError(errorMessage);
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+        setError(errorMessage);
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setProblemsLoading(false);
     }
   };
 
@@ -81,7 +145,7 @@ const Contests = () => {
   );
 
   const renderContests = (contestList, sectionTitle) => (
-    <div className="mb-20 pt-16">
+    <div className="mb-20 pt-24">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -90,7 +154,7 @@ const Contests = () => {
         <h1 className="text-4xl font-bold text-center mb-4 text-base-content">
           {sectionTitle}
         </h1>
-        <div className="h-1 w-24 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full"></div>
+        <div className="h-0.5 w-32 bg-gradient-to-r from-base-content/20 via-base-content/40 to-base-content/20 mx-auto rounded-full"></div>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start max-w-7xl mx-auto px-4">
@@ -148,102 +212,41 @@ const Contests = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
+                  {/* Prizes Section */}
+                  {contest.prize && Array.isArray(contest.prize) && contest.prize.length > 0 && (
+                    <div className="mt-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM7 10.82C5.84 10.4 5 9.3 5 8V7h2v3.82zM19 8c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium text-base-content/70">Prizes</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {contest.prize.map((prize, index) => (
+                          <div key={index} className="badge bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white border-none shadow-sm">
+                            {prize}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-base-content/70">Problems</p>
-                      <p className="text-base-content font-semibold">
-                        {contest.problems_id ? contest.problems_id.length : 0}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {hasProblems && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`btn w-full font-semibold ${
-                      isActive 
-                        ? "btn-outline border-primary text-primary hover:bg-primary/10" 
-                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0"
-                    }`}
+                <div className="card-actions justify-end">
+                  <button
                     onClick={() => handleEnterContest(contest)}
+                    className="btn bg-gradient-to-r from-blue-800 via-indigo-700 to-blue-900 text-white border-none hover:scale-105 transition-transform duration-300"
+                    disabled={problemsLoading && expandedContest === contest.contest_id}
                   >
-                    {isActive ? "Hide Details" : "Enter Contest"}
-                  </motion.button>
-                )}
-
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-6"
-                    >
-                      {problemsLoading ? (
-                        <div className="flex justify-center py-6">
-                          <span className="loading loading-spinner loading-md text-primary"></span>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <h3 className="font-semibold text-lg text-base-content border-b border-base-300 pb-2">
-                            Problems
-                          </h3>
-                          <ul className="space-y-3">
-                            {contest.problems_id.map((pid) => {
-                              const problem = problems[pid];
-                              if (!problem)
-                                return (
-                                  <li key={pid} className="text-base-content/70">
-                                    Loading...
-                                  </li>
-                                );
-                                
-                              if (problem.error)
-                                return (
-                                  <li key={pid} className="text-error">
-                                    {problem.error}
-                                  </li>
-                                );
-                              return (
-                                <motion.li
-                                  key={pid}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  className="p-4 bg-base-200 rounded-lg shadow-sm flex flex-col gap-2 border border-base-300 hover:border-primary transition"
-                                >
-                                  <Link
-                                    to={`/problems/${pid}`}
-                                    className="text-lg font-semibold text-base-content hover:text-primary transition"
-                                  >
-                                    {problem.title}
-                                  </Link>
-                                  <div className="flex flex-wrap gap-2">
-                                    {problem.tags?.map((tag, idx) => (
-                                      <motion.span
-                                        key={idx}
-                                        whileHover={{ scale: 1.05 }}
-                                        className="badge badge-sm badge-outline border-primary/50 text-primary bg-base-100"
-                                      >
-                                        {tag}
-                                      </motion.span>
-                                    ))}
-                                  </div>
-                                </motion.li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    {problemsLoading && expandedContest === contest.contest_id ? (
+                      <span className="loading loading-spinner loading-sm"></span>
+                    ) : (
+                      "Enter Contest"
+                    )}
+                  </button>
+                </div>
               </div>
             </motion.div>
           );
@@ -291,8 +294,9 @@ const Contests = () => {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-base-200 text-base-content transition-colors duration-300"
     >
-      {renderContests(ongoingContests, "🔥 Ongoing Contests")}
-      {renderContests(upcomingContests, "🕑 Upcoming Contests")}
+      {renderContests(ongoingContests, "🏆 Active Challenges")}
+      {renderContests(upcomingContests, "📅 Scheduled Events")}
+      <div className="h-20"></div>
     </motion.div>
   );
 };

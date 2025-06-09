@@ -31,6 +31,7 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/problems" element={<ProblemsList />} />
         <Route path="/problems/:id" element={<SolveProblem />} />
+        <Route path="/solve/:id" element={<SolveProblem />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/contests" element={<Contests />} />
         <Route path="/contests/:id" element={<ContestProblems />} />
