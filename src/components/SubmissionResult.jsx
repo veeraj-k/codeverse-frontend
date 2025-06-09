@@ -31,7 +31,7 @@ const SubmissionResult = () => {
         try {
           console.log('Fetching submission with ID:', id);
           const response = await axios.get(
-           `${import.meta.env.VITE_BE_URL}/api/submission/${id}/`,
+            `${import.meta.env.VITE_SUBMISSION_URL}/api/submission/${id}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`,
