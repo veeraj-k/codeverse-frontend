@@ -35,7 +35,7 @@ const ContestProblems = () => {
       try {
         // First fetch initial leaderboard data
         const response = await axios.get(
-          `https://codeverse-latest.onrender.com/message_api/leaderboard/?contest_title=${encodeURIComponent(contestName)}`,
+          `${import.meta.env.VITE_LEADERBOARD_URL}/?contest_title=${encodeURIComponent(contestName)}`,
           {
             headers: {
               'Content-Type': 'application/json'
@@ -49,7 +49,7 @@ const ContestProblems = () => {
           
           // After getting initial data, connect to WebSocket
           const formattedContestName = contestName.replace(/\s+/g, '_');
-          const wsUrl = `wss://codeverse-latest.onrender.com/ws/leaderboard/${formattedContestName}/`;
+          const wsUrl = `${import.meta.env.VITE_LEADERBOARD_WEB_SOCKET}/${formattedContestName}/`;
           console.log('Connecting to WebSocket:', wsUrl);
 
           // Close existing connection if any
@@ -68,7 +68,7 @@ const ContestProblems = () => {
           ws.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data);
-              console.log('WebSocket message received:', data);
+             
               
               if (data.message && Array.isArray(data.message)) {
                 console.log('Updating leaderboard with WebSocket data:', data.message);
@@ -96,7 +96,7 @@ const ContestProblems = () => {
 
     // Only initialize if we have contest data
     if (contest) {
-      console.log('Contest data available:', contest);
+      
       initializeLeaderboard();
     } else {
       console.log('Waiting for contest data...');
@@ -152,7 +152,7 @@ const ContestProblems = () => {
         setContest(formattedContestData);
 
         // Fetch problem details
-        const baseUrl = import.meta.env.VITE_BE_URL || 'https://codeverse-latest.onrender.com';
+        const baseUrl = import.meta.env.VITE_BE_URL;
         const token = localStorage.getItem('token');
         
         if (!baseUrl) {

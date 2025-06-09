@@ -93,7 +93,7 @@ const SolveProblem = () => {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.post(
-        `${import.meta.env.VITE_BE_URL}/api/submission/`,
+        `${import.meta.env.VITE_BE_URL}/api/submission/${id}/`,
         {
           user_id: parseInt(userId),
           problem_id: parseInt(id),
@@ -102,8 +102,8 @@ const SolveProblem = () => {
         },
         {
           headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           },
           withCredentials: true
       }
@@ -134,6 +134,7 @@ const SolveProblem = () => {
             newWs.close();
             setIsSubmitting(false);
             setShowSubmissionResult(true);
+            setCurrentSubmissionId(data.job_id);
           }
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
