@@ -93,7 +93,7 @@ const SolveProblem = () => {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.post(
-        `${import.meta.env.VITE_BE_URL}/api/submission/${id}/`,
+        `${import.meta.env.VITE_BE_URL}/api/submission/`,
         {
           user_id: parseInt(userId),
           problem_id: parseInt(id),
@@ -106,7 +106,7 @@ const SolveProblem = () => {
             'Content-Type': 'application/json'
           },
           withCredentials: true
-      }
+        }
       );
 
       setCurrentSubmissionId(response.data.submission.id);

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt, FaCode as FaLanguage } from 'react-icons/fa';
 
 const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
   const { id: paramSubmissionId } = useParams();
@@ -24,8 +26,6 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
 
       try {
         console.log('Fetching submission with ID:', submissionId);
-        console.log('API URL:', `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`);
-        
         const response = await axios.get(
           `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`,
           {
@@ -44,31 +44,11 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
           return;
         }
 
-        // Process the submission data
-        const submissionData = {
-          ...response.data,
-          language: response.data.programming_language || response.data.language || 'Unknown',
-          test_cases_passed: response.data.passed_test_cases || response.data.test_cases_passed || 0,
-          total_test_cases: response.data.total_test_cases || 0,
-          runtime: response.data.execution_time || response.data.runtime || 0,
-          memory: response.data.memory_used || response.data.memory || 0,
-          created_at: response.data.submitted_at || response.data.created_at || new Date().toISOString(),
-          problem: {
-            title: response.data.problem_title || response.data.problem?.title || 'Unknown Problem',
-            id: response.data.problem_id || response.data.problem?.id
-          },
-          submission_tests: response.data.test_results || response.data.submission_tests || [],
-          code: response.data.source_code || response.data.code || '',
-          error: response.data.error_message || response.data.error || null,
-          status: response.data.status || 'unknown'
-        };
-
-        console.log('Processed submission data:', submissionData);
-        setSubmission(submissionData);
+        setSubmission(response.data);
 
         // If submission is still processing, connect to WebSocket
         if (response.data.status === 'PROCESSING') {
-          const wsUrl = response.data.ws_url;
+          const wsUrl = `${import.meta.env.VITE_SUBMISSION_URL}/api/submission/status/${submissionId}`;
           console.log('Connecting to WebSocket:', wsUrl);
           const newWs = new WebSocket(wsUrl);
 
@@ -101,9 +81,6 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         setLoading(false);
       } catch (err) {
         console.error('Error fetching submission:', err);
-        console.error('Error response:', err.response);
-        console.error('Error request:', err.request);
-        console.error('Error config:', err.config);
         setError(
           err.response?.data?.detail || 
           err.response?.data?.message || 
@@ -132,81 +109,242 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'text-success';
+      case 'FAILED':
+        return 'text-error';
+      case 'PROCESSING':
+        return 'text-warning';
+      default:
+        return 'text-base-content';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return <FaCheckCircle className="text-success" />;
+      case 'FAILED':
+        return <FaTimesCircle className="text-error" />;
+      case 'PROCESSING':
+        return <FaExclamationTriangle className="text-warning" />;
+      default:
+        return null;
+    }
+  };
+
+  const getLanguageBadge = (language) => {
+    const languageColors = {
+      'python': 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+      'javascript': 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+      'java': 'bg-red-500/20 text-red-500 border-red-500/30',
+      'cpp': 'bg-purple-500/20 text-purple-500 border-purple-500/30',
+      'c': 'bg-gray-500/20 text-gray-500 border-gray-500/30',
+    };
+
+    const color = languageColors[language.toLowerCase()] || 'bg-primary/20 text-primary border-primary/30';
+    
+    return (
+      <span className={`px-3 py-1 rounded-full text-sm font-medium border ${color}`}>
+        {language.charAt(0).toUpperCase() + language.slice(1)}
+      </span>
+    );
+  };
+
+  const getTestStatusBadge = (status) => {
+    if (status === 'passed') {
+      return (
+        <span className="badge badge-success gap-2 px-4 py-3 text-sm font-medium">
+          <FaCheckCircle className="text-sm" />
+          Passed
+        </span>
+      );
+    }
+    
+    return (
+      <span className="badge badge-error gap-2 px-4 py-3 text-sm font-medium bg-error/10 text-error border border-error/20 hover:bg-error/20 transition-colors duration-300">
+        <FaTimesCircle className="text-sm" />
+        Failed
+      </span>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex justify-center items-center min-h-screen bg-base-200">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/70">Loading submission details...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="alert alert-error m-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="alert alert-error m-4 shadow-lg max-w-2xl mx-auto mt-20"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>{error}</span>
-      </div>
+        <div>
+          <h3 className="font-bold">Error Loading Submission</h3>
+          <div className="text-sm">{error}</div>
+        </div>
+      </motion.div>
     );
   }
 
   if (!submission) {
     return (
-      <div className="alert alert-warning m-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="alert alert-warning m-4 shadow-lg max-w-2xl mx-auto mt-20"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <span>No submission details found</span>
-      </div>
+        <div>
+          <h3 className="font-bold">No Submission Found</h3>
+          <div className="text-sm">The requested submission details could not be found.</div>
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-base-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-base-200 pt-16"
+    >
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Submission Result</h1>
-          <button 
-            onClick={handleBack}
-            className="btn btn-primary"
+        <div className="flex justify-between items-center mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
           >
-            Back to Problem
-          </button>
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="relative">
+              <h1 className="text-4xl font-bold text-base-content">
+                Submission Result
+              </h1>
+              <motion.div
+                className="h-0.5 w-32 bg-gradient-to-r from-base-content/20 via-base-content/40 to-base-content/20 mx-auto rounded-full"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              />
+            </div>
+          </motion.div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleBack}
+            className="btn btn-ghost btn-sm gap-2 hover:bg-base-300"
+          >
+            <FaArrowLeft /> Back to Problem
+          </motion.button>
         </div>
 
-        {/* Status Card */}
-        <div className="card bg-base-200 mb-6">
-          <div className="card-body">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold mb-2">
-                  Status: <span className={submission.status === 'COMPLETED' ? 'text-success' : 'text-error'}>
+        {/* Status Overview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-4">
+                {getStatusIcon(submission.status)}
+                <div>
+                  <h3 className="card-title text-lg">Status</h3>
+                  <p className={`text-xl font-semibold ${getStatusColor(submission.status)}`}>
                     {submission.status}
-                  </span>
-                </h2>
-                <p className="text-lg">
-                  Test Cases: {submission.test_cases_passed} / {submission.total_test_cases} passed
-                </p>
-              </div>
-              <div className="stats shadow">
-                <div className="stat">
-                  <div className="stat-title">Success Rate</div>
-                  <div className="stat-value">
-                    {Math.round((submission.test_cases_passed / submission.total_test_cases) * 100)}%
-                  </div>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-4">
+                <FaCheckCircle className="text-primary" />
+                <div>
+                  <h3 className="card-title text-lg">Test Cases</h3>
+                  <p className="text-xl font-semibold">
+                    {submission.test_cases_passed} / {submission.total_test_cases}
+                  </p>
+                  <p className="text-sm text-base-content/70 mt-1">
+                    Accuracy: {Math.round((submission.test_cases_passed / submission.total_test_cases) * 100)}%
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-4">
+                <FaLanguage className="text-primary" />
+                <div>
+                  <h3 className="card-title text-lg">Language</h3>
+                  <p className="text-xl font-semibold">
+                    {submission.language.charAt(0).toUpperCase() + submission.language.slice(1)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center gap-4">
+                <FaCalendarAlt className="text-primary" />
+                <div>
+                  <h3 className="card-title text-lg">Submitted</h3>
+                  <p className="text-xl font-semibold">
+                    {new Date(submission.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Code Editor */}
-        <div className="card bg-base-200 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="card bg-base-100 shadow-xl mb-8"
+        >
           <div className="card-body">
-            <h3 className="text-xl font-semibold mb-4">Your Solution</h3>
-            <div className="h-[400px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <FaCode className="text-primary" />
+                <h3 className="text-2xl font-semibold">Your Solution</h3>
+              </div>
+              {getLanguageBadge(submission.language)}
+            </div>
+            <div className="h-[500px] rounded-lg overflow-hidden border border-base-300">
               <Editor
                 height="100%"
                 defaultLanguage={submission.language}
@@ -219,64 +357,108 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                   lineNumbers: 'on',
                   roundedSelection: false,
                   scrollBeyondLastLine: false,
+                  fontFamily: 'JetBrains Mono, monospace',
+                  wordWrap: 'on',
+                  smoothScrolling: true,
+                  cursorBlinking: 'smooth',
+                  cursorSmoothCaretAnimation: true,
+                  bracketPairColorization: { enabled: true },
+                  guides: { bracketPairs: true },
+                  renderWhitespace: 'selection',
+                  renderControlCharacters: true,
+                  renderIndentGuides: true,
+                  renderLineHighlight: 'all',
+                  renderValidationDecorations: 'on',
                 }}
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Test Cases */}
-        <div className="card bg-base-200">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="card bg-base-100 shadow-xl"
+        >
           <div className="card-body">
-            <h3 className="text-xl font-semibold mb-4">Test Cases</h3>
-            <div className="space-y-4">
+            <h3 className="text-2xl font-semibold mb-6">Test Cases</h3>
+            <div className="space-y-6">
               {submission.submission_tests.map((test, index) => (
-                <div key={test.id} className="card bg-base-100">
+                <motion.div
+                  key={test.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  className="card bg-base-200 hover:shadow-lg transition-shadow duration-300"
+                >
                   <div className="card-body">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">Test Case {index + 1}</span>
-                      <span className={`badge ${test.status === 'passed' ? 'badge-success' : 'badge-error'}`}>
-                        {test.status}
-                      </span>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold">Test Case {index + 1}</span>
+                        {getTestStatusBadge(test.status)}
+                      </div>
+                      {test.runtime && (
+                        <div className="text-sm text-base-content/70">
+                          Runtime: {test.runtime} ms
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-sm text-base-content/70">Input:</span>
-                        <pre className="mt-1 p-2 bg-base-200 rounded">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-base-content/70">Input:</span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
+                        </div>
+                        <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
                           {JSON.stringify(test.input, null, 2)}
                         </pre>
                       </div>
-                      <div>
-                        <span className="text-sm text-base-content/70">Output:</span>
-                        <pre className="mt-1 p-2 bg-base-200 rounded">
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-base-content/70">Output:</span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
+                        </div>
+                        <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
                           {JSON.stringify(test.output, null, 2)}
                         </pre>
                       </div>
                     </div>
+
                     {test.stdout && (
-                      <div className="mt-2">
-                        <span className="text-sm text-base-content/70">Console Output:</span>
-                        <pre className="mt-1 p-2 bg-base-200 rounded text-sm">
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-base-content/70">Console Output:</span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
+                        </div>
+                        <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
                           {test.stdout}
                         </pre>
                       </div>
                     )}
+
                     {test.error && (
-                      <div className="mt-2">
-                        <span className="text-sm text-error">Error:</span>
-                        <pre className="mt-1 p-2 bg-error/10 rounded text-sm text-error">
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-error">Error:</span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-error/20 to-transparent"></div>
+                        </div>
+                        <pre className="mt-1 p-3 bg-error/10 rounded-lg font-mono text-sm overflow-x-auto border border-error/20 text-error">
                           {test.error}
                         </pre>
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
