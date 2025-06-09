@@ -13,6 +13,7 @@ import Contests from './pages/Contests';
 import ContestProblems from './pages/ContestProblems';
 import DiscussionForum from './components/DiscussionForum';
 import SubmissionsList from './components/SubmissionsList';
+import SubmissionResult from './components/SubmissionResult';
 
 // Make the configured axios instance available globally
 window.axios = axiosInstance;
@@ -38,6 +39,7 @@ const AppContent = () => {
         <Route path="/discuss" element={<DiscussionForum />} />
         <Route path="/central_forum" element={<DiscussionForum />} />
         <Route path="/submissions" element={<SubmissionsList />} />
+        <Route path="/submissions/:id" element={<SubmissionResult />} />
       </Routes>
     </div>
   );

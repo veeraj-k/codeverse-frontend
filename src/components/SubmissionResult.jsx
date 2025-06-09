@@ -5,43 +5,90 @@ import { motion } from 'framer-motion';
 import Editor from '@monaco-editor/react';
 import { FaArrowLeft, FaCode, FaLanguage, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
-  const { id: paramSubmissionId } = useParams();
+const SubmissionResult = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const submissionId = propSubmissionId || paramSubmissionId;
-
   useEffect(() => {
     const fetchSubmission = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          }
-        );
-        setSubmission(response.data);
+      if (!id) {
+        setError('No submission ID provided');
         setLoading(false);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Authentication required');
+          setLoading(false);
+          return;
+        }
+
+        try {
+          console.log('Fetching submission with ID:', id);
+          const response = await axios.get(
+            `https://codeverse-auth-svc.onrender.com/api/submission/${id}/`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          console.log('Raw API Response:', response);
+          console.log('Submission Data:', response.data);
+
+          if (!response.data) {
+            setError('No submission data received');
+            setLoading(false);
+            return;
+          }
+
+          // Ensure we have all required fields
+          const submissionData = {
+            ...response.data,
+            language: response.data.programming_language || response.data.language || 'Unknown',
+            test_cases_passed: response.data.passed_test_cases || response.data.test_cases_passed || 0,
+            total_test_cases: response.data.total_test_cases || 0,
+            runtime: response.data.execution_time || response.data.runtime || 0,
+            memory: response.data.memory_used || response.data.memory || 0,
+            created_at: response.data.submitted_at || response.data.created_at || new Date().toISOString(),
+            problem: {
+              title: response.data.problem_title || response.data.problem?.title || 'Unknown Problem',
+              id: response.data.problem_id || response.data.problem?.id
+            },
+            submission_tests: response.data.test_results || response.data.submission_tests || [],
+            code: response.data.source_code || response.data.code || '',
+            error: response.data.error_message || response.data.error || null,
+            status: response.data.status || 'unknown'
+          };
+
+          console.log('Processed submission data:', submissionData);
+          setSubmission(submissionData);
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching submission:', err);
+          console.error('Error details:', err.response?.data);
+          setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch submission details');
+          setLoading(false);
+        }
       } catch (err) {
-        setError('Failed to fetch submission details');
+        console.error('Error fetching submission:', err);
+        setError(err.response?.data?.message || 'Failed to fetch submission details');
         setLoading(false);
       }
     };
 
     fetchSubmission();
-  }, [submissionId]);
+  }, [id]);
 
   const handleBack = () => {
-    if (onBackToProblem) {
-      onBackToProblem();
-    } else {
-      navigate(-1);
-    }
+    navigate(-1);
   };
 
   if (loading) {
@@ -94,7 +141,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
     );
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = () => {
     const accuracy = (submission.test_cases_passed / submission.total_test_cases) * 100;
     
     if (accuracy === 100) {
@@ -140,7 +187,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
           onClick={handleBack}
         >
           <FaArrowLeft />
-          Back to Problems
+          Back to Submissions
         </motion.button>
       </div>
 
@@ -150,6 +197,31 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         className="card bg-base-200 shadow-xl"
       >
         <div className="card-body">
+          <div className="space-y-4 mb-8">
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <FaCode className="text-primary" />
+              Your Code
+            </h2>
+            <div className="bg-base-300 rounded-lg overflow-hidden">
+              <Editor
+                height="400px"
+                defaultLanguage={submission.language?.toLowerCase()}
+                value={submission.code}
+                theme="vs-dark"
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: 'on',
+                  roundedSelection: false,
+                  scrollBeyondLastLine: false,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="divider"></div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
@@ -172,6 +244,14 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                     <p className="text-lg">{submission.language || 'N/A'}</p>
                   </div>
                   <div>
+                    <h3 className="text-lg font-medium opacity-70">Runtime</h3>
+                    <p className="text-lg">{submission.runtime || 'N/A'} ms</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium opacity-70">Memory</h3>
+                    <p className="text-lg">{submission.memory || 'N/A'} MB</p>
+                  </div>
+                  <div>
                     <h3 className="text-lg font-medium opacity-70">Test Cases</h3>
                     <p className="text-lg">
                       {submission.test_cases_passed} / {submission.total_test_cases} passed
@@ -180,6 +260,20 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                       </span>
                     </p>
                   </div>
+                  <div>
+                    <h3 className="text-lg font-medium opacity-70">Problem</h3>
+                    <p className="text-lg">{submission.problem?.title || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium opacity-70">Submitted At</h3>
+                    <p className="text-lg">{new Date(submission.created_at).toLocaleString()}</p>
+                  </div>
+                  {submission.error && (
+                    <div>
+                      <h3 className="text-lg font-medium opacity-70">Error</h3>
+                      <pre className="mt-1 text-error bg-base-300 p-2 rounded">{submission.error}</pre>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -207,7 +301,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                           <pre className="mt-1">{JSON.stringify(test.input, null, 2)}</pre>
                         </div>
                         <div>
-                          <p className="opacity-70"> Output:</p>
+                          <p className="opacity-70">Output:</p>
                           <pre className="mt-1">{JSON.stringify(test.output, null, 2)}</pre>
                         </div>
                         <div>
@@ -231,31 +325,6 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="divider"></div>
-
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold flex items-center gap-2">
-              <FaCode className="text-primary" />
-              Your Code
-            </h2>
-            <div className="bg-base-300 rounded-lg overflow-hidden">
-              <Editor
-                height="400px"
-                defaultLanguage={submission.language?.toLowerCase()}
-                value={submission.code}
-                theme="vs-dark"
-                options={{
-                  readOnly: true,
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  lineNumbers: 'on',
-                  roundedSelection: false,
-                  scrollBeyondLastLine: false,
-                }}
-              />
             </div>
           </div>
         </div>
