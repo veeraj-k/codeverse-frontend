@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -5,16 +6,18 @@ import { motion } from 'framer-motion';
 import Editor from '@monaco-editor/react';
 import { FaArrowLeft, FaCode, FaLanguage, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-const SubmissionResult = () => {
-  const { id } = useParams();
+const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
+  const { id: paramSubmissionId } = useParams();
   const navigate = useNavigate();
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const submissionId = propSubmissionId || paramSubmissionId;
+
   useEffect(() => {
     const fetchSubmission = async () => {
-      if (!id) {
+      if (!submissionId) {
         setError('No submission ID provided');
         setLoading(false);
         return;
@@ -28,64 +31,66 @@ const SubmissionResult = () => {
           return;
         }
 
-        try {
-          console.log('Fetching submission with ID:', id);
-          const response = await axios.get(
-            `${import.meta.env.VITE_BE_URL}/api/submission/${id}/`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
+        console.log('Fetching submission with ID:', submissionId);
+        console.log('API URL:', `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`);
+        
+        const response = await axios.get(
+          `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
-          );
-
-          console.log('Raw API Response:', response);
-          console.log('Submission Data:', response.data);
-
-          if (!response.data) {
-            setError('No submission data received');
-            setLoading(false);
-            return;
           }
+        );
 
-          // Ensure we have all required fields
-          const submissionData = {
-            ...response.data,
-            language: response.data.programming_language || response.data.language || 'Unknown',
-            test_cases_passed: response.data.passed_test_cases || response.data.test_cases_passed || 0,
-            total_test_cases: response.data.total_test_cases || 0,
-            runtime: response.data.execution_time || response.data.runtime || 0,
-            memory: response.data.memory_used || response.data.memory || 0,
-            created_at: response.data.submitted_at || response.data.created_at || new Date().toISOString(),
-            problem: {
-              title: response.data.problem_title || response.data.problem?.title || 'Unknown Problem',
-              id: response.data.problem_id || response.data.problem?.id
-            },
-            submission_tests: response.data.test_results || response.data.submission_tests || [],
-            code: response.data.source_code || response.data.code || '',
-            error: response.data.error_message || response.data.error || null,
-            status: response.data.status || 'unknown'
-          };
+        console.log('API Response:', response);
 
-          console.log('Processed submission data:', submissionData);
-          setSubmission(submissionData);
+        if (!response.data) {
+          setError('No submission data received');
           setLoading(false);
-        } catch (err) {
-          console.error('Error fetching submission:', err);
-          console.error('Error details:', err.response?.data);
-          setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to fetch submission details');
-          setLoading(false);
+          return;
         }
+
+        // Process the submission data
+        const submissionData = {
+          ...response.data,
+          language: response.data.programming_language || response.data.language || 'Unknown',
+          test_cases_passed: response.data.passed_test_cases || response.data.test_cases_passed || 0,
+          total_test_cases: response.data.total_test_cases || 0,
+          runtime: response.data.execution_time || response.data.runtime || 0,
+          memory: response.data.memory_used || response.data.memory || 0,
+          created_at: response.data.submitted_at || response.data.created_at || new Date().toISOString(),
+          problem: {
+            title: response.data.problem_title || response.data.problem?.title || 'Unknown Problem',
+            id: response.data.problem_id || response.data.problem?.id
+          },
+          submission_tests: response.data.test_results || response.data.submission_tests || [],
+          code: response.data.source_code || response.data.code || '',
+          error: response.data.error_message || response.data.error || null,
+          status: response.data.status || 'unknown'
+        };
+
+        console.log('Processed submission data:', submissionData);
+        setSubmission(submissionData);
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching submission:', err);
-        setError(err.response?.data?.message || 'Failed to fetch submission details');
+        console.error('Error response:', err.response);
+        console.error('Error request:', err.request);
+        console.error('Error config:', err.config);
+        setError(
+          err.response?.data?.detail || 
+          err.response?.data?.message || 
+          err.message || 
+          'Failed to fetch submission details'
+        );
         setLoading(false);
       }
     };
 
     fetchSubmission();
-  }, [id]);
+  }, [submissionId]);
 
   const handleBack = () => {
     navigate(-1);
