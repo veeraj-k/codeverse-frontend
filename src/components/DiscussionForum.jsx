@@ -71,20 +71,12 @@ const DiscussionForum = ({ problemName }) => {
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
-    const now = new Date();
-    const diffInHours = Math.abs(now - date) / 36e5;
-
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
 
