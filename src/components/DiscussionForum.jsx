@@ -20,7 +20,7 @@ const DiscussionForum = ({ problemName }) => {
       try {
         const endpoint = isCentralForum 
           ? `${import.meta.env.VITE_DJ_URL}/message_api/message/central`
-          : `${import.meta.env.VITE_DJ_URL}/mesage_api/message/${problemName.toLowerCase().replace(/\s+/g, "_")}`;
+          : `${import.meta.env.VITE_DJ_URL}/message_api/message/${problemName.toLowerCase().replace(/\s+/g, "_")}`;
         
         const res = await axios.get(endpoint);
         const formattedMessages = res.data.map((msg) => ({
