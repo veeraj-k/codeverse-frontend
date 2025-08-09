@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -89,7 +89,6 @@ const Contests = () => {
         payload,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -121,7 +120,6 @@ const Contests = () => {
       let errorMessage = 'Failed to enter contest';
       if (error.response?.status === 401) {
         errorMessage = 'Session expired. Please log in again.';
-        // Don't clear tokens or redirect
         setError(errorMessage);
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

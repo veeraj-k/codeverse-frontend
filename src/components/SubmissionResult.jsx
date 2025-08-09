@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt, FaCode as FaLanguage, FaChartLine } from 'react-icons/fa';
+import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
 
 const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
   const { id: paramSubmissionId } = useParams();
@@ -28,13 +28,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
       try {
        
         const response = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`,
-          {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          }
+          `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`
         );
 
       

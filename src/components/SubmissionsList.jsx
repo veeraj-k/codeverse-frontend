@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,9 +37,6 @@ const SubmissionsList = () => {
         console.log('Fetching from URL:', url);
 
         const response = await axios.get(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           params: {
             user_id: userId
           }
@@ -403,7 +400,7 @@ const SubmissionsList = () => {
                       className="px-3 py-1 rounded-full text-sm font-medium bg-base-300/50 hover:bg-primary/20 text-base-content/70 hover:text-primary border border-base-300 hover:border-primary/30 transition-all duration-300 cursor-pointer flex items-center gap-1"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                       </svg>
                       {new Date(submission.created_at).toLocaleDateString()}
                     </motion.span>

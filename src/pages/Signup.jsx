@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaPaperPlane, FaUser, FaClock, FaComments, FaSpinner } from "react-icons/fa";
 

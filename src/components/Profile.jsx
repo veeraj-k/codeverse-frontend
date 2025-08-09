@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -43,9 +43,6 @@ const Profile = () => {
         
         // Fetch daily submission counts
         const dailyCountsResponse = await axios.get(`${import.meta.env.VITE_BE_URL}/api/submission/daily/count`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           params: {
             user_id: userId
           }
@@ -65,9 +62,6 @@ const Profile = () => {
 
         // Fetch regular submissions for other stats
         const submissionsResponse = await axios.get(`${import.meta.env.VITE_BE_URL}/api/submission/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
           params: {
             user_id: userId
           }
