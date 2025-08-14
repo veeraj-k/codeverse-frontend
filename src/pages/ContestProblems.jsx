@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "../utils/axiosConfig";
+import axios from "axios";
 import Leaderboard from "../components/Leaderboard";
 
 const ContestProblems = () => {
@@ -169,6 +169,7 @@ const ContestProblems = () => {
            
             const response = await axios.get(url, {
               headers: {
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               }
             });
@@ -203,7 +204,7 @@ const ContestProblems = () => {
         const problemResults = await Promise.all(problemPromises);
  
         const validProblems = problemResults.filter(problem => problem !== null);
-   
+  
         if (validProblems.length === 0) {
           throw new Error('No valid problems found for this contest');
         }
@@ -273,7 +274,7 @@ const ContestProblems = () => {
                 leaderboardData.map((entry, index) => (
                   <tr 
                     key={entry.user_id} 
-                    className={`${
+                    className={`hover:bg-base-300 ${
                       entry.user_name === currentUser ? 'bg-primary/20 font-semibold' : ''
                     }`}
                   >

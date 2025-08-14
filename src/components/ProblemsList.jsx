@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../utils/axiosConfig';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -14,7 +14,11 @@ const ProblemsList = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/problems/`);
+        const response = await axios.get(`${import.meta.env.VITE_BE_URL}/api/problems/`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setProblems(response.data);
         setLoading(false);
       } catch (err) {

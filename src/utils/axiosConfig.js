@@ -3,9 +3,6 @@ import axios from 'axios';
 // Create axios instance
 const axiosInstance = axios.create();
 
-// Prevent duplicate logout redirects
-let isLoggingOut = false;
-
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -27,29 +24,32 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    const status = error?.response?.status;
-
-    // Auto logout on auth errors only
-    if (status === 401 || status === 403) {
-      if (!isLoggingOut) {
-        isLoggingOut = true;
-        try {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userId');
-          localStorage.removeItem('username');
-          localStorage.removeItem('roles');
-        } catch (_) {
-          // ignore storage errors
-        }
-        if (window.location.pathname !== '/login') {
-          window.location.replace('/login');
-        } else {
-          // Already on login page; force state reset without navigation
-          window.location.reload();
-        }
+    console.log('=== Axios Error Details ===');
+    console.log('Error object:', error);
+    console.log('Error response:', error.response);
+    console.log('Error status:', error.response?.status);
+    console.log('Error data:', error.response?.data);
+    console.log('Error headers:', error.response?.headers);
+    console.log('Current token:', localStorage.getItem('token'));
+    console.log('========================');
+    
+    // Handle server response errors
+    if (error.response) {
+      // Handle token expiration (401 Unauthorized) or Not Found (404)
+      if (error.response.status === 401 || error.response.status === 404) {
+        console.log('Handling 401/404 response - clearing storage');
+        
+        // Clear local storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+        localStorage.removeItem('roles');
+        
+        // Force reload the page to clear any cached state
+        window.location.href = '/login';
       }
     }
-
+    
     return Promise.reject(error);
   }
 );

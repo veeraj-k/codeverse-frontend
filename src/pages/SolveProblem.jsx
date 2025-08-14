@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from '../utils/axiosConfig';
+import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import DiscussionForum from '../components/DiscussionForum';
 import { FaComments, FaCode, FaPlay, FaPaperPlane, FaArrowLeft, FaLightbulb, FaBuilding, FaTag } from 'react-icons/fa';
@@ -30,13 +30,24 @@ const SolveProblem = () => {
       try {
         // Fetch problem details
         const problemResponse = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/problems/${id}`
+          `${import.meta.env.VITE_BE_URL}/api/problems/${id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }
         );
         setProblem(problemResponse.data);
 
         // Fetch code template
         const codeResponse = await axios.get(
-          `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${language.toLowerCase()}`
+          `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${language.toLowerCase()}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          }
         );
         setCode(codeResponse.data.evaluator);
         setLoading(false);
@@ -60,7 +71,13 @@ const SolveProblem = () => {
     setLanguage(newLanguage);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${newLanguage.toLowerCase()}`
+        `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${newLanguage.toLowerCase()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
       );
       setCode(response.data.evaluator);
     } catch (err) {
@@ -84,6 +101,10 @@ const SolveProblem = () => {
           code: code
         },
         {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
           withCredentials: true
         }
       );
