@@ -401,8 +401,20 @@ const Profile = () => {
         <div className="bg-base-200 rounded-lg shadow-xl p-8 mb-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="avatar">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold">
-                {username?.charAt(0).toUpperCase()}
+              <div className="w-18 h-18 rounded-full">
+                <img 
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(username || 'User')}&size=96&background=3B82F6&color=ffffff&font-size=0.4&bold=true&rounded=true`}
+                  alt={`${username}'s avatar`}
+                  className="w-full h-full rounded-full"
+                  onError={(e) => {
+                    // Fallback to initials if image fails to load
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white text-8xl font-bold" style={{ display: 'none' }}>
+                  {username?.charAt(0).toUpperCase()}
+                </div>
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
