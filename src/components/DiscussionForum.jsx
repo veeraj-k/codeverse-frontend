@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPaperPlane, FaUser, FaClock, FaComments, FaSpinner } from "react-icons/fa";
+import {
+  FaPaperPlane,
+  FaUser,
+  FaClock,
+  FaComments,
+  FaSpinner,
+} from "react-icons/fa";
 
 const DiscussionForum = ({ problemName }) => {
   const [messages, setMessages] = useState([]);
@@ -18,10 +24,12 @@ const DiscussionForum = ({ problemName }) => {
     const fetchMessages = async () => {
       setIsLoading(true);
       try {
-        const endpoint = isCentralForum 
+        const endpoint = isCentralForum
           ? `${import.meta.env.VITE_DJ_URL}/message_api/message/central`
-          : `${import.meta.env.VITE_DJ_URL}/message_api/message/${problemName.toLowerCase().replace(/\s+/g, "_")}`;
-        
+          : `${import.meta.env.VITE_DJ_URL}/message_api/message/${problemName
+              .toLowerCase()
+              .replace(/\s+/g, "_")}`;
+
         const res = await axios.get(endpoint);
         const formattedMessages = res.data.map((msg) => ({
           sender: msg.user_name.username,
@@ -41,10 +49,12 @@ const DiscussionForum = ({ problemName }) => {
   }, [problemName, isCentralForum]);
 
   useEffect(() => {
-    const endpoint = isCentralForum 
+    const endpoint = isCentralForum
       ? `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/chat/central/`
-      : `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/chat/${problemName.toLowerCase().replace(/\s+/g, "_")}/`;
-    
+      : `${import.meta.env.VITE_WEB_SOCKET_URL}/ws/chat/${problemName
+          .toLowerCase()
+          .replace(/\s+/g, "_")}/`;
+
     const socket = new WebSocket(endpoint);
     socketRef.current = socket;
 
@@ -64,7 +74,9 @@ const DiscussionForum = ({ problemName }) => {
   const sendMessage = (e) => {
     e.preventDefault();
     if (newMessage.trim()) {
-      socketRef.current.send(JSON.stringify({ message: newMessage, sender: username }));
+      socketRef.current.send(
+        JSON.stringify({ message: newMessage, sender: username })
+      );
       setNewMessage("");
     }
   };
@@ -76,7 +88,7 @@ const DiscussionForum = ({ problemName }) => {
       month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -98,9 +110,13 @@ const DiscussionForum = ({ problemName }) => {
           </h2>
         </div>
 
-        <div className={`grid ${isCentralForum ? 'grid-cols-1 lg:grid-cols-4' : 'grid-cols-1'} gap-8`}>
+        <div
+          className={`grid ${
+            isCentralForum ? "grid-cols-1 lg:grid-cols-4" : "grid-cols-1"
+          } gap-8`}
+        >
           {/* Main Discussion Area */}
-          <div className={isCentralForum ? 'lg:col-span-3' : ''}>
+          <div className={isCentralForum ? "lg:col-span-3" : ""}>
             {isLoading ? (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -115,8 +131,18 @@ const DiscussionForum = ({ problemName }) => {
                 animate={{ opacity: 1 }}
                 className="alert alert-error shadow-lg"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="stroke-current shrink-0 h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span>{error}</span>
               </motion.div>
@@ -149,7 +175,9 @@ const DiscussionForum = ({ problemName }) => {
                             <FaUser className="text-primary text-lg" />
                           </div>
                           <div>
-                            <span className="font-semibold text-primary text-lg">{msg.sender}</span>
+                            <span className="font-semibold text-primary text-lg">
+                              {msg.sender}
+                            </span>
                             <div className="flex items-center gap-1 text-base-content/50 text-sm">
                               <FaClock className="text-xs" />
                               <span>{formatDate(msg.timestamp)}</span>
@@ -199,10 +227,13 @@ const DiscussionForum = ({ problemName }) => {
           {isCentralForum && (
             <div className="lg:col-span-1">
               <div className="bg-base-200 rounded-xl p-6 sticky top-24">
-                <h3 className="text-xl font-semibold mb-4 text-primary">About Discussion</h3>
+                <h3 className="text-xl font-semibold mb-4 text-primary">
+                  About Discussion
+                </h3>
                 <div className="space-y-4 text-base-content/80">
                   <p>
-                    Join the discussion Forum. Share your thoughts, ask questions, or help others with their solutions.
+                    Join the discussion Forum. Share your thoughts, ask
+                    questions, or help others with their solutions.
                   </p>
                   <div className="bg-base-100 rounded-lg p-4">
                     <h4 className="font-semibold mb-2">Guidelines:</h4>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { backendApiInstance } from "../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
@@ -18,7 +18,7 @@ const Login = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.post(
+      const response = await backendApiInstance.post(
         `${import.meta.env.VITE_BE_URL}/api/login`,
         {
           email,

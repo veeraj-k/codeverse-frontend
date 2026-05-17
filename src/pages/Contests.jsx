@@ -53,74 +53,82 @@ const Contests = () => {
 
   const handleEnterContest = async (contest) => {
     if (!contest.problems_id || contest.problems_id.length === 0) {
-      setError('Contest problems are not available yet');
+      setError("Contest problems are not available yet");
       return;
     }
 
     try {
       setProblemsLoading(true);
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
 
       if (!token) {
-        console.error('No authentication token found');
-        setError('Please log in to enter the contest');
+        console.error("No authentication token found");
+        setError("Please log in to enter the contest");
         return;
       }
 
       if (!userId) {
-        console.error('No user ID found');
-        setError('Please log in to enter the contest');
+        console.error("No user ID found");
+        setError("Please log in to enter the contest");
         return;
       }
 
       // First register for the contest using environment variable
       const payload = {
         user_id: parseInt(userId),
-        contest_title: contest.template_id
+        contest_title: contest.template_id,
       };
 
-      console.log('Contest object:', contest); // Debug log
-      console.log('Template ID:', contest.template_id); // Debug log
-      console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Debug log with formatting
+      console.log("Contest object:", contest); // Debug log
+      console.log("Template ID:", contest.template_id); // Debug log
+      console.log("Sending payload:", JSON.stringify(payload, null, 2)); // Debug log with formatting
 
       const response = await axios.post(
         `${import.meta.env.VITE_DJ_URL}/message_api/contest_registration/`,
         payload,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
-      console.log('Contest registration response:', response.data);
+      console.log("Contest registration response:", response.data);
 
       // Store contest data in localStorage for the contest problems page
-      localStorage.setItem('currentContest', JSON.stringify({
-        contest_id: contest.contest_id,
-        contestName: contest.template_id,
-        startTime: contest.start_datetime,
-        endTime: contest.end_datetime,
-        problems: contest.problems_id,
-        prize: contest.prize || contest.prizes ? (Array.isArray(contest.prize) ? contest.prize : JSON.parse(contest.prizes)) : []
-      }));
+      localStorage.setItem(
+        "currentContest",
+        JSON.stringify({
+          contest_id: contest.contest_id,
+          contestName: contest.template_id,
+          startTime: contest.start_datetime,
+          endTime: contest.end_datetime,
+          problems: contest.problems_id,
+          prize:
+            contest.prize || contest.prizes
+              ? Array.isArray(contest.prize)
+                ? contest.prize
+                : JSON.parse(contest.prizes)
+              : [],
+        })
+      );
 
       // Navigate to contest problems page
       navigate(`/contests/${contest.contest_id}`);
     } catch (error) {
-      console.error('Failed to enter contest:', {
+      console.error("Failed to enter contest:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
         data: error.response?.data,
-        payload: JSON.stringify(payload, null, 2) // Log the payload that was sent with formatting
+        payload: JSON.stringify(payload, null, 2), // Log the payload that was sent with formatting
       });
 
-      let errorMessage = 'Failed to enter contest';
+      let errorMessage = "Failed to enter contest";
       if (error.response?.status === 401) {
-        errorMessage = 'Session expired. Please log in again.';
+        errorMessage = "Session expired. Please log in again.";
         // Don't clear tokens or redirect
         setError(errorMessage);
       } else if (error.response?.data?.message) {
@@ -186,12 +194,24 @@ const Contests = () => {
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="w-4 h-4 text-primary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-base-content/70">Start Time</p>
+                      <p className="text-sm font-medium text-base-content/70">
+                        Start Time
+                      </p>
                       <p className="text-base-content font-semibold">
                         {new Date(contest.start_datetime).toLocaleString()}
                       </p>
@@ -200,12 +220,24 @@ const Contests = () => {
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="w-4 h-4 text-secondary"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-base-content/70">End Time</p>
+                      <p className="text-sm font-medium text-base-content/70">
+                        End Time
+                      </p>
                       <p className="text-base-content font-semibold">
                         {new Date(contest.end_datetime).toLocaleString()}
                       </p>
@@ -213,34 +245,54 @@ const Contests = () => {
                   </div>
 
                   {/* Prizes Section */}
-                  {contest.prize && Array.isArray(contest.prize) && contest.prize.length > 0 && (
-                    <div className="mt-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM7 10.82C5.84 10.4 5 9.3 5 8V7h2v3.82zM19 8c0 1.3-.84 2.4-2 2.82V7h2v1z" />
-                          </svg>
-                        </div>
-                        <p className="text-sm font-medium text-base-content/70">Prizes</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {contest.prize.map((prize, index) => (
-                          <div key={index} className="badge bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white border-none shadow-sm">
-                            {prize}
+                  {contest.prize &&
+                    Array.isArray(contest.prize) &&
+                    contest.prize.length > 0 && (
+                      <div className="mt-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-yellow-400/10 flex items-center justify-center">
+                            <svg
+                              className="w-4 h-4 text-yellow-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM7 10.82C5.84 10.4 5 9.3 5 8V7h2v3.82zM19 8c0 1.3-.84 2.4-2 2.82V7h2v1z"
+                              />
+                            </svg>
                           </div>
-                        ))}
+                          <p className="text-sm font-medium text-base-content/70">
+                            Prizes
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {contest.prize.map((prize, index) => (
+                            <div
+                              key={index}
+                              className="badge bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 text-white border-none shadow-sm"
+                            >
+                              {prize}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 <div className="card-actions justify-end">
                   <button
                     onClick={() => handleEnterContest(contest)}
                     className="btn bg-gradient-to-r from-blue-800 via-indigo-700 to-blue-900 text-white border-none hover:scale-105 transition-transform duration-300"
-                    disabled={problemsLoading && expandedContest === contest.contest_id}
+                    disabled={
+                      problemsLoading && expandedContest === contest.contest_id
+                    }
                   >
-                    {problemsLoading && expandedContest === contest.contest_id ? (
+                    {problemsLoading &&
+                    expandedContest === contest.contest_id ? (
                       <span className="loading loading-spinner loading-sm"></span>
                     ) : (
                       "Enter Contest"
@@ -277,8 +329,18 @@ const Contests = () => {
         animate={{ opacity: 1, y: 0 }}
         className="alert alert-error m-4 shadow-lg max-w-2xl mx-auto mt-20"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="stroke-current shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <div>
           <h3 className="font-bold">Error Loading Contests</h3>

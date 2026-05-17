@@ -1,0 +1,10 @@
+PORT=5173
+VITE_BE_URL=https://codeverse-auth-svc.onrender.com
+VITE_CONTEST_REGISTRATION=https://codeverse-latest.onrender.com/message_api/contest_registration/
+VITE_DJ_URL=https://codeverse-latest.onrender.com
+VITE_FETCH_MESSAGE=https://codeverse-latest.onrender.com/message_api/message
+VITE_LEADERBOARD_URL=https://codeverse-latest.onrender.com/message_api/leaderboard/
+VITE_LEADERBOARD_WEB_SOCKET=wss://codeverse-latest.onrender.com/ws/leaderboard
+VITE_START_CONTEST_URL=https://codeverse-latest.onrender.com/message_api/contest_start/
+VITE_SUBMISSION_URL=wss://codeverse-submission-svc.onrender.com
+VITE_WEB_SOCKET_URL=wss://codeverse-latest.onrender.com

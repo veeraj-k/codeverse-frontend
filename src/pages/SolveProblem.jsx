@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { backendApiInstance } from '../utils/axiosConfig';
 import Editor from '@monaco-editor/react';
 import DiscussionForum from '../components/DiscussionForum';
 import { FaComments, FaCode, FaPlay, FaPaperPlane, FaArrowLeft, FaLightbulb, FaBuilding, FaTag } from 'react-icons/fa';
@@ -29,7 +29,7 @@ const SolveProblem = () => {
     const fetchProblem = async () => {
       try {
         // Fetch problem details
-        const problemResponse = await axios.get(
+        const problemResponse = await backendApiInstance.get(
           `${import.meta.env.VITE_BE_URL}/api/problems/${id}`,
           {
             headers: {
@@ -40,7 +40,7 @@ const SolveProblem = () => {
         setProblem(problemResponse.data);
 
         // Fetch code template
-        const codeResponse = await axios.get(
+        const codeResponse = await backendApiInstance.get(
           `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${language.toLowerCase()}`,
           {
             headers: {
@@ -70,7 +70,7 @@ const SolveProblem = () => {
   const handleLanguageChange = async (newLanguage) => {
     setLanguage(newLanguage);
     try {
-      const response = await axios.get(
+      const response = await backendApiInstance.get(
         `${import.meta.env.VITE_BE_URL}/api/problems/${id}/metadata/${newLanguage.toLowerCase()}`,
         {
           headers: {
@@ -92,7 +92,7 @@ const SolveProblem = () => {
 
     try {
       const userId = localStorage.getItem('userId');
-      const response = await axios.post(
+      const response = await backendApiInstance.post(
         `${import.meta.env.VITE_BE_URL}/api/submission/`,
         {
           user_id: parseInt(userId),

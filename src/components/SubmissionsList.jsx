@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { backendApiInstance } from '../utils/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,7 +36,7 @@ const SubmissionsList = () => {
         const url = `${import.meta.env.VITE_BE_URL}/api/submission/`;
         console.log('Fetching from URL:', url);
 
-        const response = await axios.get(url, {
+        const response = await backendApiInstance.get(url, {
           headers: {
             'Authorization': `Bearer ${token}`
           },

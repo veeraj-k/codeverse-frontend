@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import axios from "axios";
+import axiosInstance, { backendApiInstance } from "../utils/axiosConfig";
 import Leaderboard from "../components/Leaderboard";
 
 const ContestProblems = () => {
@@ -34,7 +34,7 @@ const ContestProblems = () => {
       
       try {
         // First fetch initial leaderboard data
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${import.meta.env.VITE_DJ_URL}/message_api/leaderboard/?contest_title=${encodeURIComponent(contestName)}`,
           {
             headers: {
@@ -167,7 +167,7 @@ const ContestProblems = () => {
           try {
             const url = `${baseUrl}/api/problems/${problemId}`;
            
-            const response = await axios.get(url, {
+            const response = await backendApiInstance.get(url, {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

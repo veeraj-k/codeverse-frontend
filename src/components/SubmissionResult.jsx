@@ -1,11 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import Editor from '@monaco-editor/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaCode, FaClock, FaMemory, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaCalendarAlt, FaCode as FaLanguage, FaChartLine } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { backendApiInstance } from "../utils/axiosConfig";
+import Editor from "@monaco-editor/react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaArrowLeft,
+  FaCode,
+  FaClock,
+  FaMemory,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaExclamationTriangle,
+  FaCalendarAlt,
+  FaCode as FaLanguage,
+  FaChartLine,
+} from "react-icons/fa";
 
-const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) => {
+const SubmissionResult = ({
+  submissionId: propSubmissionId,
+  onBackToProblem,
+}) => {
   const { id: paramSubmissionId } = useParams();
   const navigate = useNavigate();
   const [submission, setSubmission] = useState(null);
@@ -20,27 +34,24 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
   useEffect(() => {
     const fetchSubmission = async () => {
       if (!submissionId) {
-        setError('No submission ID provided');
+        setError("No submission ID provided");
         setLoading(false);
         return;
       }
 
       try {
-       
-        const response = await axios.get(
+        const response = await backendApiInstance.get(
           `${import.meta.env.VITE_BE_URL}/api/submission/${submissionId}/`,
           {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
-          }
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          },
         );
 
-      
-
         if (!response.data) {
-          setError('No submission data received');
+          setError("No submission data received");
           setLoading(false);
           return;
         }
@@ -48,45 +59,52 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         setSubmission(response.data);
 
         // Fetch complexity analysis
-        try {
-          const complexityResponse = await axios.post(
-             `${import.meta.env.VITE_DJ_URL}/message_api/comp/`,
-            {
-              code: response.data.code
-            }
-          );
-          setComplexity(complexityResponse.data.message);
-        } catch (complexityError) {
-          console.error('Error fetching complexity:', complexityError);
-        }
+        // TODO: Enable when API is ready
+        // try {
+        //   const complexityResponse = await backendApiInstance.post(
+        //      `${import.meta.env.VITE_DJ_URL}/message_api/comp/`,
+        //     {
+        //       code: response.data.code
+        //     }
+        //   );
+        //   setComplexity(complexityResponse.data.message);
+        // } catch (complexityError) {
+        //   console.error('Error fetching complexity:', complexityError);
+        // }
+
+        // Hardcoded complexity value for now
+        setComplexity({
+          "time complexity": "O(n)",
+          "space complexity": "O(1)",
+        });
 
         // If submission is still processing, connect to WebSocket
-        if (response.data.status === 'PROCESSING') {
+        if (response.data.status === "PROCESSING") {
           const wsUrl = `${import.meta.env.VITE_SUBMISSION_URL}/api/submission/status/${submissionId}`;
-         
+
           const newWs = new WebSocket(wsUrl);
 
           newWs.onopen = () => {
-            console.log('Connected to submission server...');
+            console.log("Connected to submission server...");
           };
 
           newWs.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('WebSocket message received:', data);
-            setSubmission(prev => ({
+            console.log("WebSocket message received:", data);
+            setSubmission((prev) => ({
               ...prev,
               status: data.status,
-              message: data.message || `Status: ${data.status}`
+              message: data.message || `Status: ${data.status}`,
             }));
 
-            if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+            if (data.status === "COMPLETED" || data.status === "FAILED") {
               newWs.close();
             }
           };
 
           newWs.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            setError('Error connecting to submission server');
+            console.error("WebSocket error:", error);
+            setError("Error connecting to submission server");
           };
 
           setWs(newWs);
@@ -94,12 +112,12 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
 
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching submission:', err);
+        console.error("Error fetching submission:", err);
         setError(
-          err.response?.data?.detail || 
-          err.response?.data?.message || 
-          err.message || 
-          'Failed to fetch submission details'
+          err.response?.data?.detail ||
+            err.response?.data?.message ||
+            err.message ||
+            "Failed to fetch submission details",
         );
         setLoading(false);
       }
@@ -125,24 +143,24 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'COMPLETED':
-        return 'text-success';
-      case 'FAILED':
-        return 'text-error';
-      case 'PROCESSING':
-        return 'text-warning';
+      case "COMPLETED":
+        return "text-success";
+      case "FAILED":
+        return "text-error";
+      case "PROCESSING":
+        return "text-warning";
       default:
-        return 'text-base-content';
+        return "text-base-content";
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'COMPLETED':
+      case "COMPLETED":
         return <FaCheckCircle className="text-success" />;
-      case 'FAILED':
+      case "FAILED":
         return <FaTimesCircle className="text-error" />;
-      case 'PROCESSING':
+      case "PROCESSING":
         return <FaExclamationTriangle className="text-warning" />;
       default:
         return null;
@@ -151,24 +169,28 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
 
   const getLanguageBadge = (language) => {
     const languageColors = {
-      'python': 'bg-blue-500/20 text-blue-500 border-blue-500/30',
-      'javascript': 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
-      'java': 'bg-red-500/20 text-red-500 border-red-500/30',
-      'cpp': 'bg-purple-500/20 text-purple-500 border-purple-500/30',
-      'c': 'bg-gray-500/20 text-gray-500 border-gray-500/30',
+      python: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+      javascript: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+      java: "bg-red-500/20 text-red-500 border-red-500/30",
+      cpp: "bg-purple-500/20 text-purple-500 border-purple-500/30",
+      c: "bg-gray-500/20 text-gray-500 border-gray-500/30",
     };
 
-    const color = languageColors[language.toLowerCase()] || 'bg-primary/20 text-primary border-primary/30';
-    
+    const color =
+      languageColors[language.toLowerCase()] ||
+      "bg-primary/20 text-primary border-primary/30";
+
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium border ${color}`}>
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-medium border ${color}`}
+      >
         {language.charAt(0).toUpperCase() + language.slice(1)}
       </span>
     );
   };
 
   const getTestStatusBadge = (status) => {
-    if (status === 'passed') {
+    if (status === "passed") {
       return (
         <span className="badge badge-success gap-2 px-4 py-3 text-sm font-medium">
           <FaCheckCircle className="text-sm" />
@@ -176,7 +198,7 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         </span>
       );
     }
-    
+
     return (
       <span className="badge badge-error gap-2 px-4 py-3 text-sm font-medium bg-error/10 text-error border border-error/20 hover:bg-error/20 transition-colors duration-300">
         <FaTimesCircle className="text-sm" />
@@ -194,7 +216,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
           className="text-center"
         >
           <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content/70">Loading submission details...</p>
+          <p className="mt-4 text-base-content/70">
+            Loading submission details...
+          </p>
         </motion.div>
       </div>
     );
@@ -207,8 +231,18 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         animate={{ opacity: 1, y: 0 }}
         className="alert alert-error m-4 shadow-lg max-w-2xl mx-auto mt-20"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="stroke-current shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <div>
           <h3 className="font-bold">Error Loading Submission</h3>
@@ -225,12 +259,24 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
         animate={{ opacity: 1, y: 0 }}
         className="alert alert-warning m-4 shadow-lg max-w-2xl mx-auto mt-20"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="stroke-current shrink-0 h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
         </svg>
         <div>
           <h3 className="font-bold">No Submission Found</h3>
-          <div className="text-sm">The requested submission details could not be found.</div>
+          <div className="text-sm">
+            The requested submission details could not be found.
+          </div>
         </div>
       </motion.div>
     );
@@ -251,8 +297,18 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
             className="flex items-center gap-3"
           >
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div className="relative">
@@ -289,7 +345,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                 {getStatusIcon(submission.status)}
                 <div>
                   <h3 className="card-title text-lg">Status</h3>
-                  <p className={`text-xl font-semibold ${getStatusColor(submission.status)}`}>
+                  <p
+                    className={`text-xl font-semibold ${getStatusColor(submission.status)}`}
+                  >
                     {submission.status}
                   </p>
                 </div>
@@ -304,10 +362,17 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                 <div>
                   <h3 className="card-title text-lg">Test Cases</h3>
                   <p className="text-xl font-semibold">
-                    {submission.test_cases_passed} / {submission.total_test_cases}
+                    {submission.test_cases_passed} /{" "}
+                    {submission.total_test_cases}
                   </p>
                   <p className="text-sm text-base-content/70 mt-1">
-                    Accuracy: {Math.round((submission.test_cases_passed / submission.total_test_cases) * 100)}%
+                    Accuracy:{" "}
+                    {Math.round(
+                      (submission.test_cases_passed /
+                        submission.total_test_cases) *
+                        100,
+                    )}
+                    %
                   </p>
                 </div>
               </div>
@@ -320,13 +385,15 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                 <FaClock className="text-primary" />
                 <div>
                   <h3 className="card-title text-lg">Time Complexity</h3>
-                  {complexity ? (
+                  {/* complexity ? (
                     <p className="text-xl font-semibold text-success">
                       {complexity['time complexity']}
                     </p>
-                  ) : (
-                    <p className="text-sm text-base-content/70">Analyzing...</p>
-                  )}
+                  ) : ( */}
+                  <p className="text-xl font-semibold text-success">
+                    {complexity?.["time complexity"] || "O(n)"}
+                  </p>
+                  {/* ) */}
                 </div>
               </div>
             </div>
@@ -338,13 +405,15 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                 <FaMemory className="text-primary" />
                 <div>
                   <h3 className="card-title text-lg">Space Complexity</h3>
-                  {complexity ? (
+                  {/* complexity ? (
                     <p className="text-xl font-semibold text-success">
                       {complexity['space complexity']}
                     </p>
-                  ) : (
-                    <p className="text-sm text-base-content/70">Analyzing...</p>
-                  )}
+                  ) : ( */}
+                  <p className="text-xl font-semibold text-success">
+                    {complexity?.["space complexity"] || "O(1)"}
+                  </p>
+                  {/* ) */}
                 </div>
               </div>
             </div>
@@ -390,21 +459,21 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                   readOnly: true,
                   minimap: { enabled: false },
                   fontSize: 14,
-                  lineNumbers: 'on',
+                  lineNumbers: "on",
                   roundedSelection: false,
                   scrollBeyondLastLine: false,
-                  fontFamily: 'JetBrains Mono, monospace',
-                  wordWrap: 'on',
+                  fontFamily: "JetBrains Mono, monospace",
+                  wordWrap: "on",
                   smoothScrolling: true,
-                  cursorBlinking: 'smooth',
+                  cursorBlinking: "smooth",
                   cursorSmoothCaretAnimation: true,
                   bracketPairColorization: { enabled: true },
                   guides: { bracketPairs: true },
-                  renderWhitespace: 'selection',
+                  renderWhitespace: "selection",
                   renderControlCharacters: true,
                   renderIndentGuides: true,
-                  renderLineHighlight: 'all',
-                  renderValidationDecorations: 'on',
+                  renderLineHighlight: "all",
+                  renderValidationDecorations: "on",
                 }}
               />
             </div>
@@ -432,7 +501,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                   <div className="card-body">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold">Test Case {index + 1}</span>
+                        <span className="text-lg font-semibold">
+                          Test Case {index + 1}
+                        </span>
                         {getTestStatusBadge(test.status)}
                       </div>
                       {test.runtime && (
@@ -445,7 +516,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-base-content/70">Input:</span>
+                          <span className="text-sm font-medium text-base-content/70">
+                            Input:
+                          </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
                         </div>
                         <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
@@ -455,7 +528,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
 
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-base-content/70">Output:</span>
+                          <span className="text-sm font-medium text-base-content/70">
+                            Output:
+                          </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
                         </div>
                         <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
@@ -467,7 +542,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                     {test.stdout && (
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-base-content/70">Console Output:</span>
+                          <span className="text-sm font-medium text-base-content/70">
+                            Console Output:
+                          </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-primary/20 to-transparent"></div>
                         </div>
                         <pre className="mt-1 p-3 bg-base-300 rounded-lg font-mono text-sm overflow-x-auto border border-base-300 hover:border-primary/30 transition-colors duration-300">
@@ -479,7 +556,9 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
                     {test.error && (
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-error">Error:</span>
+                          <span className="text-sm font-medium text-error">
+                            Error:
+                          </span>
                           <div className="h-px flex-1 bg-gradient-to-r from-error/20 to-transparent"></div>
                         </div>
                         <pre className="mt-1 p-3 bg-error/10 rounded-lg font-mono text-sm overflow-x-auto border border-error/20 text-error">
@@ -498,4 +577,4 @@ const SubmissionResult = ({ submissionId: propSubmissionId, onBackToProblem }) =
   );
 };
 
-export default SubmissionResult; 
+export default SubmissionResult;

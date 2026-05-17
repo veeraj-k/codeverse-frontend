@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { backendApiInstance } from "../utils/axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
@@ -18,7 +18,7 @@ const Signup = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post(`${import.meta.env.VITE_BE_URL}/api/register`, {
+      await backendApiInstance.post(`${import.meta.env.VITE_BE_URL}/api/register`, {
         username,
         email,
         password,
